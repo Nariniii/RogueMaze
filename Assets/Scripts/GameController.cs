@@ -220,7 +220,7 @@ public class GameController : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.S)) nextPosition = new Position(x, y + 1);
 
         if (nextPosition.Equals(_playerPosition)) return;
-
+        
         if (CheckCanMove(nextPosition))
             StartCoroutine(MovePlayer(nextPosition));
         if (CheckWallPanel(nextPosition))
@@ -242,21 +242,24 @@ public class GameController : MonoBehaviour
         CheckKey(nextPosition);
         CheckPotion(nextPosition);
 
-        _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Background);
-        _playerPosition = nextPosition;
-        _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Player);
-        yield return _player.Move(_panelPositionDict[nextPosition].GetLocalPosition());
-        yield return new WaitForEndOfFrame();
+        if (_isPositionUpdate)
+        {
+            _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Background);
+            _playerPosition = nextPosition;
+            _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Player);
+            yield return _player.Move(_panelPositionDict[nextPosition].GetLocalPosition());
+            yield return new WaitForEndOfFrame();
 
-        if (_enemyRandomMoveList.Count != 0)
-        {
-            RandomMoveEnemy();
-            yield return new WaitForEndOfFrame();
-        }
-        if (_enemyEngageList.Count != 0)
-        {
-            FollowingMoveEnemy();
-            yield return new WaitForEndOfFrame();
+            if (_enemyRandomMoveList.Count != 0)
+            {
+                RandomMoveEnemy();
+                yield return new WaitForEndOfFrame();
+            }
+            if (_enemyEngageList.Count != 0)
+            {
+                FollowingMoveEnemy();
+                yield return new WaitForEndOfFrame();
+            }
         }
     }
 
@@ -373,8 +376,8 @@ public class GameController : MonoBehaviour
             Goal();
         if (isGoalPanel && !_haveKey)
         {
-            StartCoroutine(_player.ShakeMotion());
             _isPositionUpdate = false;
+            StartCoroutine(_player.ShakeMotion());
         }
     }
 
@@ -386,6 +389,7 @@ public class GameController : MonoBehaviour
             _panelPositionDict[nextPosition].GetPotion();
             for (int i = 0; i < _player.Life; i++)
                 _lifeImageList[i].color = Color.white;
+            _isPositionUpdate = true;
         }
     }
 
@@ -396,6 +400,7 @@ public class GameController : MonoBehaviour
             _player.GetKey();
             _panelPositionDict[nextPosition].GetKey();
             _haveKey = true;
+            _isPositionUpdate = true;
         }
     }
 
