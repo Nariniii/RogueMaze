@@ -44,14 +44,14 @@ public class GameManager : MonoBehaviour
         if (_isGameScene && _gameController.IsGameSetup)
         {
             _gameController.Move();
-            if (_gameController.GetRandomMoveEnemyCount() != 0)
-            {
-                StartCoroutine(_gameController.RandomMoveEnemy());
-            }
-            if (_gameController.GetEngageEnemyCount() != 0)
-            {
-                StartCoroutine(_gameController.FollowingMoveEnemy());
-            }
+            //if (_gameController.GetRandomMoveEnemyCount() != 0)
+            //{
+            //    _gameController.RandomMoveEnemy();
+            //}
+            //if (_gameController.GetEngageEnemyCount() != 0)
+            //{
+            //    _gameController.FollowingMoveEnemy();
+            //}
         }
     }
 

@@ -93,7 +93,7 @@ public class Enemy : MonoBehaviour
     {
         Life -= damage;
         yield return _goblinImage.DOColor(new Color(1f, 0, 0), 0.5f).SetEase(Ease.Linear).WaitForCompletion();
-        yield return _goblinImage.DOColor(new Color(0, 0, 0), 0.5f).SetEase(Ease.Linear).WaitForCompletion();
+        yield return _goblinImage.DOColor(new Color(1f, 1f, 1f), 0.5f).SetEase(Ease.Linear).WaitForCompletion();
         if (Life <= 0) IsDead = true;
     }
 

@@ -222,13 +222,16 @@ public class GameController : MonoBehaviour
             _playerPosition = nextPosition;
             _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Player);
             yield return _player.Move(_panelPositionDict[nextPosition].GetLocalPosition());
+            if (_enemyList.Count != 0) RandomMoveEnemy();
+            if (_enemyEngageList.Count != 0) FollowingMoveEnemy();
         }
     }
 
-    public IEnumerator RandomMoveEnemy()
+    public void RandomMoveEnemy()
     {
         foreach (var enemy in _enemyList)
         {
+            Debug.Log("random!");
             if (IsNearCreature(enemy.Position, _playerPosition, enemy.Visibility))
             {
                 enemy.IsFindPlayer = true;
@@ -252,15 +255,15 @@ public class GameController : MonoBehaviour
                 panelList[n].UpdatePanelStatus(MazePanelElement.PanelType.Enemy);
                 enemy.SetPosition(panelList[n].Position);
                 StartCoroutine(enemy.Move(panelList[n].GetLocalPosition()));
-                yield return new WaitForSecondsRealtime(5f);
             }
         }
     }
 
-    public IEnumerator FollowingMoveEnemy()
+    public void FollowingMoveEnemy()
     {
         foreach (var e in _enemyEngageList)
         {
+            Debug.Log("follow!");
             // battle
             if (IsNearCreature(e.Position, _playerPosition, 1))
             {
@@ -280,7 +283,6 @@ public class GameController : MonoBehaviour
                     _enemyList.Add(e);
                 }
                 StartCoroutine(e.Move(panel.GetLocalPosition()));
-                yield return new WaitForSecondsRealtime(1f);
             }
         }
     }
@@ -293,9 +295,9 @@ public class GameController : MonoBehaviour
         }
     }
 
-    private void DeadEnemy()
+    public bool IsDeadEnemy()
     {
-
+        foreach (var e in )
     }
 
     public int GetRandomMoveEnemyCount()
