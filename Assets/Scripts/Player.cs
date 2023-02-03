@@ -118,11 +118,6 @@ public class Player : MonoBehaviour
         yield return new WaitForSecondsRealtime(Speed);
     }
 
-    public void DeadEnemy(Enemy enemy)
-    {
-
-    }
-
     public IEnumerator ShakeMotion()
     {
         Debug.Log("shake player");
@@ -137,6 +132,11 @@ public class Player : MonoBehaviour
     public RectTransform GetPlayerRectTransform()
     {
         return _rectTransform;
+    }
+
+    public void SetLocalScale(Vector2 scale)
+    {
+        _rectTransform.localScale = scale;
     }
 
     public void GetPotion()

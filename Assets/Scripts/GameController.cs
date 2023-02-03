@@ -33,6 +33,7 @@ public class GameController : MonoBehaviour
     private int _columns;
     private int _dirX;
     private int _dirY;
+    private float _scale;
     private Vector3 _gridPositionDiff;
     private List<Enemy> _enemyList = new List<Enemy>();
     private List<Enemy> _enemyRandomMoveList;
@@ -75,6 +76,7 @@ public class GameController : MonoBehaviour
         if (_enemyList.Count != 0)
             foreach (var e in _enemyList) Destroy(e.gameObject);
         _blackoutCanvasGroup.alpha = 0f;
+        _scale = 1f;
         _enemyList = new List<Enemy>();
         _enemyRandomMoveList = new List<Enemy>();
         _enemyEngageList = new List<Enemy>();
@@ -98,8 +100,8 @@ public class GameController : MonoBehaviour
         yield return new WaitForEndOfFrame();
         MakeMaze();
         yield return new WaitForEndOfFrame();
-        EnemySetup(_enemyLevelInformation);
-        PlayerSetup(playerJobName);
+        StartCoroutine( EnemySetup(_enemyLevelInformation));
+        StartCoroutine( PlayerSetup(playerJobName));
         yield return new WaitForEndOfFrame();
         MakeLifebar();
         IsGameSetup = true;
@@ -112,6 +114,8 @@ public class GameController : MonoBehaviour
         switch (stageSize)
         {
             case 200:
+                _scale = 0.75f;
+                //_stageGridRect.localScale = new Vector2(_scale, _scale);
                 _stageGridLayoutGroup.cellSize = new Vector2(70, 70);
                 _gridPositionDiff = new Vector3(-650, 300, 0);
                 //_stageGridRect.localPosition = _gridPositionDiff;
@@ -176,22 +180,26 @@ public class GameController : MonoBehaviour
         else if (_mazeStringList[panelCount] == "e") _enemyPositionList.Add(position);
     }
 
-    public void EnemySetup(string enemyLevelInfo)
+    public IEnumerator EnemySetup(string enemyLevelInfo)
     {
         Enemy enemy;
         foreach (var p in _enemyPositionList)
         {
             _enemyList.Add(enemy = Instantiate(_enemyElement, _gameCanvasRect));
             _enemyRandomMoveList.Add(enemy);
+            //enemy.SetLocalScale(new Vector2(_scale, _scale));
+            yield return new WaitForEndOfFrame();
             enemy.SetLocalPosition(_panelPositionDict[p].GetLocalPosition());
             enemy.SetPosition(p);
             enemy.Setup(enemyLevelInfo);
         }
     }
 
-    public void PlayerSetup(string playerJobName)
+    public IEnumerator PlayerSetup(string playerJobName)
     {
         _player.Setup(playerJobName);
+        //_player.SetLocalScale(new Vector2(_scale, _scale));
+        yield return new WaitForEndOfFrame();
         _player.SetLocalPosition(_panelPositionDict[_startPosition].GetLocalPosition());
         _playerPosition = _startPosition;
     }
@@ -239,22 +247,23 @@ public class GameController : MonoBehaviour
         _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Player);
         yield return _player.Move(_panelPositionDict[nextPosition].GetLocalPosition());
         yield return new WaitForEndOfFrame();
-        
-        if (_enemyEngageList.Count != 0)
-        {
-            FollowingMoveEnemy();
-            yield return new WaitForEndOfFrame();
-        }
+
         if (_enemyRandomMoveList.Count != 0)
         {
             RandomMoveEnemy();
+            yield return new WaitForEndOfFrame();
+        }
+        if (_enemyEngageList.Count != 0)
+        {
+            FollowingMoveEnemy();
             yield return new WaitForEndOfFrame();
         }
     }
 
     public void RandomMoveEnemy()
     {
-        foreach (var enemy in _enemyRandomMoveList)
+        var tempList = new List<Enemy>(_enemyRandomMoveList);
+        foreach (var enemy in tempList)
         {
             if (IsNearCreature(enemy.Position, _playerPosition, enemy.Visibility))
             {
@@ -279,7 +288,8 @@ public class GameController : MonoBehaviour
 
     public void FollowingMoveEnemy()
     {
-        foreach (var e in _enemyEngageList)
+        var tempList = new List<Enemy>(_enemyEngageList);
+        foreach (var e in tempList)
         {
             // battle
             if (IsNearCreature(e.Position, _playerPosition, 1))
@@ -484,33 +494,33 @@ public class GameController : MonoBehaviour
             if (CheckBrankPanel(position))
                 panelList.Add(_panelPositionDict[position]);
             // left top
-            position = new Position(x - i, y - i);
-            if (CheckBrankPanel(position))
-                panelList.Add(_panelPositionDict[position]);
+            //position = new Position(x - i, y - i);
+            //if (CheckBrankPanel(position))
+            //    panelList.Add(_panelPositionDict[position]);
             // top
             position = new Position(x, y - i);
             if (CheckBrankPanel(position))
                 panelList.Add(_panelPositionDict[position]);
             // top right
-            position = new Position(x + i, y - i);
-            if (CheckBrankPanel(position))
-                panelList.Add(_panelPositionDict[position]);
+            //position = new Position(x + i, y - i);
+            //if (CheckBrankPanel(position))
+            //    panelList.Add(_panelPositionDict[position]);
             // right
             position = new Position(x + i, y);
             if (CheckBrankPanel(position))
                 panelList.Add(_panelPositionDict[position]);
             // right bottom
-            position = new Position(x + i, y + i);
-            if (CheckBrankPanel(position))
-                panelList.Add(_panelPositionDict[position]);
+            //position = new Position(x + i, y + i);
+            //if (CheckBrankPanel(position))
+            //    panelList.Add(_panelPositionDict[position]);
             // bottom
             position = new Position(x, y + i);
             if (CheckBrankPanel(position))
                 panelList.Add(_panelPositionDict[position]);
             // bottom left
-            position = new Position(x - i, y + i);
-            if (CheckBrankPanel(position))
-                panelList.Add(_panelPositionDict[position]);
+            //position = new Position(x - i, y + i);
+            //if (CheckBrankPanel(position))
+            //    panelList.Add(_panelPositionDict[position]);
         }
         return panelList;
     }

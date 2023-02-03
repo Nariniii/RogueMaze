@@ -69,6 +69,11 @@ public class Enemy : MonoBehaviour
         Position = position;
     }
 
+    public void SetLocalScale(Vector2 scale)
+    {
+        _rectTransform.localScale = scale;
+    }
+
     public void SetLocalPosition(Vector2 pos)
     {
         _rectTransform.anchoredPosition = pos;
