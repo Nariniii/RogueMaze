@@ -38,7 +38,7 @@ public class Menu : MonoBehaviour
     [SerializeField]
     private CanvasGroup _continueButtonCanvasGroup;
 
-
+    public bool IsDeadOrContinueButtonActive { get; set; }
 
     public string PlayerTypeName { get; private set; }
 
@@ -47,11 +47,17 @@ public class Menu : MonoBehaviour
 
     private void Start()
     {
+        MenuInit();
+    }
+
+    public void MenuInit()
+    {
         StartButtonInit();
     }
 
     private void StartButtonInit()
     {
+        IsDeadOrContinueButtonActive = false;
         _startButton.gameObject.SetActive(true);
         _playerSelectButtonsObject.SetActive(false);
         _gameProgressButtonsObject.SetActive(false);
@@ -187,6 +193,7 @@ public class Menu : MonoBehaviour
 
     public void GameProgressButtonsInit()
     {
+        IsDeadOrContinueButtonActive = true;
         _gameProgressButtonsObject.SetActive(true);
         _playerSelectButtonsObject.SetActive(false);
         _startButton.gameObject.SetActive(false);
@@ -230,6 +237,7 @@ public class Menu : MonoBehaviour
 
     public void DeadOrContinue()
     {
+        if (IsDeadOrContinueButtonActive) return;
         GameProgressButtonsInit();
     }
 }

@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     private string _playerJobName;
     private bool _isGameScene = false;
     private int _stageNumber;
+    
 
     private void Awake()
     {
@@ -35,23 +36,27 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         if (!_isGameScene) return;
+        if (_gameController.IsGoal) return;
         if (_gameController.IsPlayerDead())
         {
-            _gameCanvasObject.SetActive(false);
-            _menuCanvasObject.SetActive(true);
-            _menu.DeadOrContinue();
+            if (!_menu.IsDeadOrContinueButtonActive)
+            {
+                //_gameCanvasObject.SetActive(false);
+                _menuCanvasObject.SetActive(true);
+                _menu.DeadOrContinue();
+            }
         }
         if (_isGameScene && _gameController.IsGameSetup)
         {
             _gameController.Move();
-            if (_gameController.GetRandomMoveEnemyCount() != 0)
-            {
-                StartCoroutine(_gameController.RandomMoveEnemy());
-            }
-            if (_gameController.GetEngageEnemyCount() != 0)
-            {
-                StartCoroutine(_gameController.FollowingMoveEnemy());
-            }
+            //if (_gameController.GetRandomMoveEnemyCount() != 0)
+            //{
+            //    _gameController.RandomMoveEnemy();
+            //}
+            //if (_gameController.GetEngageEnemyCount() != 0)
+            //{
+            //    _gameController.FollowingMoveEnemy();
+            //}
         }
     }
 
@@ -71,6 +76,8 @@ public class GameManager : MonoBehaviour
 
     private void GameContinue()
     {
+        _menu.MenuInit();
+        _menuCanvasObject.SetActive(false);
         _stageNumber = _gameController.StageNumber;
         _gameController.SetStageNumber(_stageNumber);
         StartCoroutine(_gameController.GameInit(_playerJobName));

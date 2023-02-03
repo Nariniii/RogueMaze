@@ -13,7 +13,7 @@ public class Player : MonoBehaviour
         public int Power { get; private set; }
         public int Magic { get; private set; }
         public float Speed { get; private set; }
-        public OriginalStatus(int life, int mana, int power, int magic, float speed)
+        public OriginalStatus(int life, int mana, int power, int magic, int speed)
         {
             Life = life;
             Mana = mana;
@@ -44,7 +44,7 @@ public class Player : MonoBehaviour
     public int Mana { get; private set; }
     public int Power { get; private set; }
     public int Magic { get; private set; }
-    public float Speed { get; private set; }
+    public int Speed { get; private set; }
 
     public enum PlayerJob
     {
@@ -68,7 +68,7 @@ public class Player : MonoBehaviour
                 Mana = 0;
                 Power = 1;
                 Magic = 0;
-                Speed = 1.5f;
+                Speed = 1;
                 status = new OriginalStatus(Life, Mana, Power, Magic, Speed);
                 break;
             case "Mage":
@@ -90,7 +90,7 @@ public class Player : MonoBehaviour
                 Mana = 5;
                 Power = 1;
                 Magic = 1;
-                Speed = 1;
+                Speed = 2;
                 status = new OriginalStatus(Life, Mana, Power, Magic, Speed);
                 break;
         }
@@ -109,7 +109,6 @@ public class Player : MonoBehaviour
         int damage = Power <= Magic ? Magic : Power;
         StartCoroutine(AttackMotion());
         StartCoroutine(enemy.GetDamage(damage));
-        if (enemy.IsDead) Destroy(enemy);
         IsAttacking = false;
     }
 
@@ -117,11 +116,6 @@ public class Player : MonoBehaviour
     {
         yield return _weaponRect.DOLocalRotate(new Vector3(0, 0, 360f), 0.5f, RotateMode.FastBeyond360).SetEase(Ease.OutCubic);
         yield return new WaitForSecondsRealtime(Speed);
-    }
-
-    public void DeadEnemy(Enemy enemy)
-    {
-
     }
 
     public IEnumerator ShakeMotion()
@@ -140,6 +134,11 @@ public class Player : MonoBehaviour
         return _rectTransform;
     }
 
+    public void SetLocalScale(Vector2 scale)
+    {
+        _rectTransform.localScale = scale;
+    }
+
     public void GetPotion()
     {
         Life = status.Life;
@@ -155,7 +154,7 @@ public class Player : MonoBehaviour
     {
         Life = Life - damage;
         yield return _soldierImage.DOColor(new Color(1f, 0, 0), 0.5f).SetEase(Ease.Linear);
-        yield return _soldierImage.DOColor(new Color(0, 0, 0), 0.5f).SetEase(Ease.Linear);
+        yield return _soldierImage.DOColor(new Color(1f, 1f, 1f), 0.5f).SetEase(Ease.Linear);
         if (Life < 0) IsDead = true;
     }
 }
