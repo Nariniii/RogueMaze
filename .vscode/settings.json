@@ -1,4 +1,4 @@
-﻿{
+{
     "files.exclude":
     {
         "**/.DS_Store":true,
@@ -51,5 +51,16 @@
         "ProjectSettings/":true,
         "temp/":true,
         "Temp/":true
-    }
+    },
+    "csharp.inlayHints.parameters.enabled": true,
+    "csharp.inlayHints.types.forLambdaParameterTypes": true,
+    "csharp.inlayHints.types.forImplicitVariableTypes": true,
+    "csharp.inlayHints.types.forImplicitObjectCreation": true,
+    "csharp.inlayHints.parameters.forIndexerParameters": true,
+    "csharp.inlayHints.parameters.forLiteralParameters": true,
+    "csharp.inlayHints.parameters.forObjectCreationParameters": true,
+    "csharp.inlayHints.parameters.forOtherParameters": true,
+    "csharp.inlayHints.parameters.suppressForParametersThatDifferOnlyBySuffix": true,
+    "csharp.inlayHints.parameters.suppressForParametersThatMatchArgumentName": true,
+    "csharp.inlayHints.types.enabled": true
 }
