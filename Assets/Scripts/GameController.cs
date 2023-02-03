@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
+using DG.Tweening;
 
 public class GameController : MonoBehaviour
 {
@@ -25,13 +26,16 @@ public class GameController : MonoBehaviour
     private RectTransform _gameCanvasRect;
     [SerializeField]
     private RectTransform _lifebarRect;
+    [SerializeField]
+    private CanvasGroup _blackoutCanvasGroup;
 
     private int _rows;
     private int _columns;
-    private int dirX;
-    private int dirY;
+    private int _dirX;
+    private int _dirY;
     private Vector3 _gridPositionDiff;
-    private List<Enemy> _enemyList;
+    private List<Enemy> _enemyList = new List<Enemy>();
+    private List<Enemy> _enemyRandomMoveList;
     private List<Enemy> _enemyEngageList;
     private List<string> _mazeStringList;
     private Dictionary<Position, MazePanelElement> _panelPositionDict;
@@ -46,13 +50,13 @@ public class GameController : MonoBehaviour
     private string _enemyLevelInformation;
     private bool _haveKey;
     private bool _isPositionUpdate;
-    private bool _isGoal;
     private bool _isGameContinue;
 
     public UnityEvent gameGoalCallback = new UnityEvent();
 
     public int StageNumber { get; private set; }
     public bool IsGameSetup { get; set; }
+    public bool IsGoal { get; private set; }
 
     private void Start()
     {
@@ -62,13 +66,17 @@ public class GameController : MonoBehaviour
     private void Update()
     {
         if (!IsGameSetup) return;
-
     }
 
     private void GameReset()
     {
         foreach (Transform t in _stageGridLayoutGroup.transform) Destroy(t.gameObject);
+        foreach (Transform t in _lifebarGridLayoutGroup.transform) Destroy(t.gameObject);
+        if (_enemyList.Count != 0)
+            foreach (var e in _enemyList) Destroy(e.gameObject);
+        _blackoutCanvasGroup.alpha = 0f;
         _enemyList = new List<Enemy>();
+        _enemyRandomMoveList = new List<Enemy>();
         _enemyEngageList = new List<Enemy>();
         _mazeStringList = new List<string>();
         _potionPositionList = new List<Position>();
@@ -77,7 +85,7 @@ public class GameController : MonoBehaviour
         _panelPositionDict = new Dictionary<Position, MazePanelElement>();
         _haveKey = false;
         _isPositionUpdate = false;
-        _isGoal = false;
+        IsGoal = false;
         _isGameContinue = false;
         IsGameSetup = false;
     }
@@ -174,6 +182,7 @@ public class GameController : MonoBehaviour
         foreach (var p in _enemyPositionList)
         {
             _enemyList.Add(enemy = Instantiate(_enemyElement, _gameCanvasRect));
+            _enemyRandomMoveList.Add(enemy);
             enemy.SetLocalPosition(_panelPositionDict[p].GetLocalPosition());
             enemy.SetPosition(p);
             enemy.Setup(enemyLevelInfo);
@@ -190,23 +199,32 @@ public class GameController : MonoBehaviour
     public void Move()
     {
         if (!IsGameSetup) return;
+        if (_player.IsDead) return;
         if (_player.IsAttacking) return;
         if (_player.IsMoving) return;
 
         int x = _playerPosition.X, y = _playerPosition.Y;
         Position nextPosition = new Position(x, y);
 
-        if (Input.GetKey(KeyCode.W)) nextPosition = new Position(x, y - 1);
-        else if (Input.GetKey(KeyCode.A)) nextPosition = new Position(x - 1, y);
-        else if (Input.GetKey(KeyCode.D)) nextPosition = new Position(x + 1, y);
-        else if (Input.GetKey(KeyCode.S)) nextPosition = new Position(x, y + 1);
+        if (Input.GetKeyDown(KeyCode.W)) nextPosition = new Position(x, y - 1);
+        else if (Input.GetKeyDown(KeyCode.A)) nextPosition = new Position(x - 1, y);
+        else if (Input.GetKeyDown(KeyCode.D)) nextPosition = new Position(x + 1, y);
+        else if (Input.GetKeyDown(KeyCode.S)) nextPosition = new Position(x, y + 1);
 
         if (nextPosition.Equals(_playerPosition)) return;
 
         if (CheckCanMove(nextPosition))
             StartCoroutine(MovePlayer(nextPosition));
-        if (CheckWallPanel(nextPosition) || CheckEnemyPanel(nextPosition))
+        if (CheckWallPanel(nextPosition))
             StartCoroutine(_player.ShakeMotion());
+        if (CheckEnemyPanel(nextPosition))
+        {
+            foreach(var e in _enemyList)
+            {
+                if (e.Position.Equals(nextPosition))
+                    StartCoroutine(Battle(_player, e));
+            }
+        }
     }
 
     private IEnumerator MovePlayer(Position nextPosition)
@@ -216,34 +234,34 @@ public class GameController : MonoBehaviour
         CheckKey(nextPosition);
         CheckPotion(nextPosition);
 
-        if (_isPositionUpdate)
+        _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Background);
+        _playerPosition = nextPosition;
+        _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Player);
+        yield return _player.Move(_panelPositionDict[nextPosition].GetLocalPosition());
+        yield return new WaitForEndOfFrame();
+        
+        if (_enemyEngageList.Count != 0)
         {
-            _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Background);
-            _playerPosition = nextPosition;
-            _panelPositionDict[_playerPosition].UpdatePanelStatus(MazePanelElement.PanelType.Player);
-            yield return _player.Move(_panelPositionDict[nextPosition].GetLocalPosition());
-            if (_enemyList.Count != 0) RandomMoveEnemy();
-            if (_enemyEngageList.Count != 0) FollowingMoveEnemy();
+            FollowingMoveEnemy();
+            yield return new WaitForEndOfFrame();
+        }
+        if (_enemyRandomMoveList.Count != 0)
+        {
+            RandomMoveEnemy();
+            yield return new WaitForEndOfFrame();
         }
     }
 
     public void RandomMoveEnemy()
     {
-        foreach (var enemy in _enemyList)
+        foreach (var enemy in _enemyRandomMoveList)
         {
-            Debug.Log("random!");
             if (IsNearCreature(enemy.Position, _playerPosition, enemy.Visibility))
             {
                 enemy.IsFindPlayer = true;
-                _enemyList.Remove(enemy);
+                _enemyRandomMoveList.Remove(enemy);
                 _enemyEngageList.Add(enemy);
-                if (IsNearCreature(enemy.Position, _playerPosition, 1))
-                {
-                    //enemy.Attack(_player);
-                    //_player.GetDamage(enemy.Power);
-                    //PlayerDamageAnimation();
-                    //StartCoroutine(_player.ShakeMotion());
-                }
+                Debug.Log("near add");
             }
             else // enemy random move
             {
@@ -263,41 +281,63 @@ public class GameController : MonoBehaviour
     {
         foreach (var e in _enemyEngageList)
         {
-            Debug.Log("follow!");
             // battle
             if (IsNearCreature(e.Position, _playerPosition, 1))
             {
-                _player.Attack(e);
-                e.Attack(_player);
+                StartCoroutine(Battle(_player, e));
             }
             else // follow move
             {
-                var nextPosition = new Position(e.Position.X + dirX, e.Position.Y + dirY);
+                Debug.Log("no attack");
+                var nextPosition = new Position(e.Position.X + _dirX, e.Position.Y + _dirY);
                 MazePanelElement panel = _panelPositionDict[nextPosition];
                 panel.UpdatePanelStatus(MazePanelElement.PanelType.Enemy);
                 _panelPositionDict[e.Position].UpdatePanelStatus(MazePanelElement.PanelType.Background);
                 e.SetPosition(panel.Position);
                 if (!IsNearCreature(e.Position, _playerPosition, e.Visibility))
                 {
+                    Debug.Log("no near");
                     _enemyEngageList.Remove(e);
-                    _enemyList.Add(e);
+                    _enemyRandomMoveList.Add(e);
                 }
                 StartCoroutine(e.Move(panel.GetLocalPosition()));
             }
         }
     }
 
-    public void Battle()
+    public IEnumerator Battle(Player p, Enemy e)
     {
-        foreach (var e in _enemyEngageList)
-        {
-            
-        }
+        Debug.Log("attack!");
+        p.Attack(e);
+        e.Attack(p);
+        yield return new WaitForEndOfFrame();
+        PlayerDamageAnimation();
+        if (e.IsDead)
+            yield return DeadEnemy(e);
+
     }
 
-    public bool IsDeadEnemy()
+    private bool IsDeadEnemy()
     {
-        foreach (var e in )
+        foreach (var e in _enemyList)
+        {
+            if (e.IsDead)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private IEnumerator DeadEnemy(Enemy e)
+    {
+        Debug.Log("DeadEnemy!");
+        if (_enemyList.Contains(e)) _enemyList.Remove(e);
+        if (_enemyRandomMoveList.Contains(e)) _enemyRandomMoveList.Remove(e);
+        if (_enemyEngageList.Contains(e)) _enemyEngageList.Remove(e);
+        _panelPositionDict[e.Position].UpdatePanelStatus(MazePanelElement.PanelType.Background);
+        yield return new WaitForEndOfFrame();
+        Destroy(e.gameObject);
     }
 
     public int GetRandomMoveEnemyCount()
@@ -352,8 +392,16 @@ public class GameController : MonoBehaviour
     private void Goal()
     {
         Debug.Log("Goal");
-        _isGoal = true;
+        IsGoal = true;
         StageNumber += 1;
+        //StartCoroutine(BlackOutStage());
+        IsGoal = false;
+        gameGoalCallback.Invoke();
+    }
+
+    private IEnumerator BlackOutStage()
+    {
+        yield return _blackoutCanvasGroup.DOFade(1f, 3f).SetEase(Ease.Linear).WaitForCompletion();
     }
 
     public bool IsPlayerDead()
@@ -399,8 +447,8 @@ public class GameController : MonoBehaviour
                 if (i == 0 && j == 0) continue;
                 if (CheckDirectionPanel(myPos, enemyPos, i, j, visibility))
                 {
-                    dirX = i;
-                    dirY = j;
+                    _dirX = i;
+                    _dirY = j;
                     return true;
                 }
             }

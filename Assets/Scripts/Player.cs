@@ -109,7 +109,6 @@ public class Player : MonoBehaviour
         int damage = Power <= Magic ? Magic : Power;
         StartCoroutine(AttackMotion());
         StartCoroutine(enemy.GetDamage(damage));
-        if (enemy.IsDead) Destroy(enemy);
         IsAttacking = false;
     }
 
