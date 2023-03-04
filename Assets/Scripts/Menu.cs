@@ -62,22 +62,18 @@ public class Menu : MonoBehaviour
         _playerSelectButtonsObject.SetActive(false);
         _gameProgressButtonsObject.SetActive(false);
 
-        _startButton._entryDown.callback.AddListener((eventData) => { StartButtonDown(); });
-        _startButton._entryUp.callback.AddListener((eventData) => { StartButtonUp(); });
-        _startButton.SetTrigger("Down");
-        _startButton.SetTrigger("Up");
+        _startButton.DownAddListener(StartButtonDown);
+        _startButton.UpAddListener(StartButtonUp);
     }
 
-    public void StartButtonDown()
+    public void StartButtonDown(BaseEventData eventData)
     {
-        _startButton.gameObject.transform.DOScale(0.95f, 0.24f).SetEase(Ease.OutCubic);
-        _startButtonCanvasGroup.DOFade(0.8f, 0.24f).SetEase(Ease.OutCubic);
+        ButtonEnterAnimation(_startButton);
     }
 
-    public void StartButtonUp()
+    public void StartButtonUp(BaseEventData eventData)
     {
-        _startButton.gameObject.transform.DOScale(1f, 0.24f).SetEase(Ease.OutCubic);
-        _startButtonCanvasGroup.DOFade(1f, 0.24f).SetEase(Ease.OutCubic);
+        ButtonExitAnimation(_startButton);
         StartButton();
     }
 
@@ -91,29 +87,21 @@ public class Menu : MonoBehaviour
     {
         _playerSelectButtonsObject.SetActive(true);
 
-        _soldierButton._entryEnter.callback.AddListener((eventData) => { PlayerSelectButtonEnter(eventData); });
-        _mageButton._entryEnter.callback.AddListener((eventData) => { PlayerSelectButtonEnter(eventData); });
-        _thiefButton._entryEnter.callback.AddListener((eventData) => { PlayerSelectButtonEnter(eventData); });
+        _soldierButton.ResetTrigger();
+        _mageButton.ResetTrigger();
+        _thiefButton.ResetTrigger();
 
-        _soldierButton.SetTrigger("Enter");
-        _mageButton.SetTrigger("Enter");
-        _thiefButton.SetTrigger("Enter");
+        _soldierButton.EnterAddListener(PlayerSelectButtonEnter);
+        _mageButton.EnterAddListener(PlayerSelectButtonEnter);
+        _thiefButton.EnterAddListener(PlayerSelectButtonEnter);
 
-        _soldierButton._entryExit.callback.AddListener((eventData) => { PlayerSelectButtonExit(eventData); });
-        _mageButton._entryExit.callback.AddListener((eventData) => { PlayerSelectButtonExit(eventData); });
-        _thiefButton._entryExit.callback.AddListener((eventData) => { PlayerSelectButtonExit(eventData); });
+        _soldierButton.ExitAddListener(PlayerSelectButtonExit);
+        _mageButton.ExitAddListener(PlayerSelectButtonExit);
+        _thiefButton.ExitAddListener(PlayerSelectButtonExit);
 
-        _soldierButton.SetTrigger("Exit");
-        _mageButton.SetTrigger("Exit");
-        _thiefButton.SetTrigger("Exit");
-
-        _soldierButton._entryClick.callback.AddListener((eventData) => { PlayerSelectButtonClick(eventData); });
-        _mageButton._entryClick.callback.AddListener((eventData) => { PlayerSelectButtonClick(eventData); });
-        _thiefButton._entryClick.callback.AddListener((eventData) => { PlayerSelectButtonClick(eventData); });
-
-        _soldierButton.SetTrigger("Click");
-        _mageButton.SetTrigger("Click");
-        _thiefButton.SetTrigger("Click");
+        _soldierButton.ClickAddListener(PlayerSelectButtonClick);
+        _mageButton.ClickAddListener(PlayerSelectButtonClick);
+        _thiefButton.ClickAddListener(PlayerSelectButtonClick);
     }
 
     public void PlayerSelectButtonEnter(BaseEventData eventData)
@@ -121,28 +109,20 @@ public class Menu : MonoBehaviour
         GameObject pointerObj = (eventData as PointerEventData).pointerEnter;
         if (pointerObj.tag == null)
         {
-            Debug.LogWarning("pointerEnter info null");
+            Debug.LogWarning("pointerEnter info null.");
             return;
         }
         switch (pointerObj.tag)
         {
             case "Soldier":
-                _soldierButton.gameObject.transform.DOScale(0.95f, 0.24f).SetEase(Ease.OutCubic);
-                _soldierButtonCanvasGroup.DOFade(0.8f, 0.24f).SetEase(Ease.OutCubic);
+                ButtonEnterAnimation(_soldierButton);
                 break;
-
             case "Mage":
-                _mageButton.gameObject.transform.DOScale(0.95f, 0.24f).SetEase(Ease.OutCubic);
-                _mageButtonCanvasGroup.DOFade(0.8f, 0.24f).SetEase(Ease.OutCubic);
+                ButtonEnterAnimation(_mageButton);
                 break;
 
             case "Thief":
-                _thiefButton.gameObject.transform.DOScale(0.95f, 0.24f).SetEase(Ease.OutCubic);
-                _thiefButtonCanvasGroup.DOFade(0.8f, 0.24f).SetEase(Ease.OutCubic);
-                break;
-
-            default:
-                Debug.LogWarning("No tag character");
+                ButtonEnterAnimation(_thiefButton);
                 break;
         }
     }
@@ -152,30 +132,33 @@ public class Menu : MonoBehaviour
         GameObject pointerObj = (eventData as PointerEventData).pointerEnter;
         if (pointerObj.tag == null)
         {
-            Debug.LogWarning("pointerExit info null");
+            Debug.LogWarning("pointerExit info null.");
             return;
         }
         switch (pointerObj.tag)
         {
             case "Soldier":
-                _soldierButton.gameObject.transform.DOScale(1f, 0.24f).SetEase(Ease.OutCubic);
-                _soldierButtonCanvasGroup.DOFade(1f, 0.24f).SetEase(Ease.OutCubic);
+                ButtonExitAnimation(_soldierButton);
                 break;
-
             case "Mage":
-                _mageButton.gameObject.transform.DOScale(1f, 0.24f).SetEase(Ease.OutCubic);
-                _mageButtonCanvasGroup.DOFade(1f, 0.24f).SetEase(Ease.OutCubic);
+                ButtonExitAnimation(_mageButton);
                 break;
-
             case "Thief":
-                _thiefButton.gameObject.transform.DOScale(1f, 0.24f).SetEase(Ease.OutCubic);
-                _thiefButtonCanvasGroup.DOFade(1f, 0.24f).SetEase(Ease.OutCubic);
-                break;
-
-            default:
-                Debug.LogWarning("No tag character");
+                ButtonExitAnimation(_thiefButton);
                 break;
         }
+    }
+
+    private void ButtonEnterAnimation(ImageButton button)
+    {
+        button.DOScale(new Vector3(.95f, .95f), .24f);
+        button.DOFade(.8f, .24f);
+    }
+
+    private void ButtonExitAnimation(ImageButton button)
+    {
+        button.DOScale(new Vector3(1f, 1f), .24f);
+        button.DOFade(1f, .24f);
     }
 
     public void PlayerSelectButtonClick(BaseEventData eventData)
@@ -183,7 +166,7 @@ public class Menu : MonoBehaviour
         GameObject pointerObj = (eventData as PointerEventData).pointerEnter;
         if (pointerObj.tag == null)
         {
-            Debug.LogWarning("No tag obj");
+            Debug.LogWarning("pointerClick info null.");
             return;
         }
         PlayerTypeName = pointerObj.name;
@@ -198,40 +181,32 @@ public class Menu : MonoBehaviour
         _playerSelectButtonsObject.SetActive(false);
         _startButton.gameObject.SetActive(false);
 
-        _gameOverButton._entryDown.callback.AddListener((eventData) => { GameOverButtonDown(); });
-        _gameOverButton._entryUp.callback.AddListener((eventData) => { GameOverButtonUp(); });
-        _gameOverButton.SetTrigger("Down");
-        _gameOverButton.SetTrigger("Up");
+        _gameOverButton.DownAddListener(GameOverButtonDown);
+        _gameOverButton.UpAddListener(GameOverButtonUp);
 
-        _continueButton._entryDown.callback.AddListener((eventData) => { ContinueButtonDown(); });
-        _continueButton._entryUp.callback.AddListener((eventData) => { ContinueButtonUp(); });
-        _continueButton.SetTrigger("Down");
-        _continueButton.SetTrigger("Up");
+        _continueButton.DownAddListener(ContinueButtonDown);
+        _continueButton.UpAddListener(ContinueButtonUp);
     }
 
-    public void GameOverButtonDown()
+    public void GameOverButtonDown(BaseEventData eventData)
     {
-        _gameOverButton.gameObject.transform.DOScale(0.95f, 0.24f).SetEase(Ease.OutCubic);
-        _gameOverButtonCanvasGroup.DOFade(0.8f, 0.24f).SetEase(Ease.OutCubic);
+        ButtonEnterAnimation(_gameOverButton);
     }
 
-    public void GameOverButtonUp()
+    public void GameOverButtonUp(BaseEventData eventData)
     {
-        _gameOverButton.gameObject.transform.DOScale(1f, 0.24f).SetEase(Ease.OutCubic);
-        _gameOverButtonCanvasGroup.DOFade(1f, 0.24f).SetEase(Ease.OutCubic);
+        ButtonExitAnimation(_gameOverButton);
         StartButtonInit();
     }
 
-    public void ContinueButtonDown()
+    public void ContinueButtonDown(BaseEventData eventData)
     {
-        _continueButton.gameObject.transform.DOScale(0.95f, 0.24f).SetEase(Ease.OutCubic);
-        _continueButtonCanvasGroup.DOFade(0.8f, 0.24f).SetEase(Ease.OutCubic);
+        ButtonEnterAnimation(_continueButton);
     }
 
-    public void ContinueButtonUp()
+    public void ContinueButtonUp(BaseEventData eventData)
     {
-        _continueButton.gameObject.transform.DOScale(1f, 0.24f).SetEase(Ease.OutCubic);
-        _continueButtonCanvasGroup.DOFade(1f, 0.24f).SetEase(Ease.OutCubic);
+        ButtonExitAnimation(_continueButton);
         gameContinueCallback.Invoke();
     }
 
